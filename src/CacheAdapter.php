@@ -12,15 +12,17 @@ use League\Flysystem\FileAttributes;
 use League\Flysystem\FilesystemAdapter;
 use League\Flysystem\StorageAttributes;
 use League\Flysystem\UnableToCopyFile;
+use League\Flysystem\UnableToGeneratePublicUrl;
 use League\Flysystem\UnableToMoveFile;
 use League\Flysystem\UnableToProvideChecksum;
 use League\Flysystem\UnableToReadFile;
 use League\Flysystem\UnableToRetrieveMetadata;
 use League\Flysystem\UnableToSetVisibility;
+use League\Flysystem\UrlGeneration\PublicUrlGenerator;
 use Psr\Cache\CacheItemPoolInterface;
 use RuntimeException;
 
-class CacheAdapter implements FilesystemAdapter, ChecksumProvider
+class CacheAdapter implements FilesystemAdapter, PublicUrlGenerator, ChecksumProvider
 {
     use CacheItemsTrait;
     use CalculateChecksumFromStream;
@@ -477,5 +479,14 @@ class CacheAdapter implements FilesystemAdapter, ChecksumProvider
         $itemDestination->set($destinationStorageAttributes);
 
         $this->saveCacheItem($itemDestination);
+    }
+
+    public function publicUrl(string $path, Config $config): string
+    {
+        if (!$this->adapter instanceof PublicUrlGenerator) {
+            throw UnableToGeneratePublicUrl::noGeneratorConfigured($path);
+        }
+
+        return $this->adapter->publicUrl($path, $config);
     }
 }

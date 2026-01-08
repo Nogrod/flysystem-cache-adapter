@@ -2,6 +2,7 @@
 
 namespace jgivoni\Flysystem\Cache;
 
+use DateTimeInterface;
 use ErrorException;
 use League\Flysystem\CalculateChecksumFromStream;
 use League\Flysystem\ChecksumAlgoIsNotSupported;
@@ -13,16 +14,18 @@ use League\Flysystem\FilesystemAdapter;
 use League\Flysystem\StorageAttributes;
 use League\Flysystem\UnableToCopyFile;
 use League\Flysystem\UnableToGeneratePublicUrl;
+use League\Flysystem\UnableToGenerateTemporaryUrl;
 use League\Flysystem\UnableToMoveFile;
 use League\Flysystem\UnableToProvideChecksum;
 use League\Flysystem\UnableToReadFile;
 use League\Flysystem\UnableToRetrieveMetadata;
 use League\Flysystem\UnableToSetVisibility;
 use League\Flysystem\UrlGeneration\PublicUrlGenerator;
+use League\Flysystem\UrlGeneration\TemporaryUrlGenerator;
 use Psr\Cache\CacheItemPoolInterface;
 use RuntimeException;
 
-class CacheAdapter implements FilesystemAdapter, PublicUrlGenerator, ChecksumProvider
+class CacheAdapter implements FilesystemAdapter, PublicUrlGenerator, TemporaryUrlGenerator, ChecksumProvider
 {
     use CacheItemsTrait;
     use CalculateChecksumFromStream;
@@ -488,5 +491,14 @@ class CacheAdapter implements FilesystemAdapter, PublicUrlGenerator, ChecksumPro
         }
 
         return $this->adapter->publicUrl($path, $config);
+    }
+
+    public function temporaryUrl(string $path, DateTimeInterface $expiresAt, Config $config): string
+    {
+        if (!$this->adapter instanceof TemporaryUrlGenerator) {
+            throw UnableToGenerateTemporaryUrl::noGeneratorConfigured($path);
+        }
+
+        return $this->adapter->temporaryUrl($path, $expiresAt, $config);
     }
 }
